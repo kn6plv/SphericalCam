@@ -18,9 +18,9 @@ function spherical_viewer() {
       concat: function (n) {
         const o = [];
         o.length = 16;
-        for (let i = 0; i < o.length; i += 1) {
+        for (let i = 0; i < o.length; i++) {
           let v = 0;
-          for (let j = 0; j < 4; j += 1) {
+          for (let j = 0; j < 4; j++) {
             v += this[~~(i / 4) * 4 + j] * n[i % 4 + j * 4];
           }
           o[i] = v;
@@ -30,9 +30,9 @@ function spherical_viewer() {
       transform: function (n) {
         const o = [];
         o.length = n.length;
-        for (let i = 0; i < o.length; i += 1) {
+        for (let i = 0; i < o.length; i++) {
           let v = 0;
-          for (let j = 0; j < n.length; j += 1) {
+          for (let j = 0; j < n.length; j++) {
             v += this[j * 4 + i] * n[j];
           }
           o[i] = v;
@@ -156,8 +156,6 @@ function spherical_viewer() {
     height: 768,
     hDiv: hDiv,
     vDiv: hDiv << 1,
-    tMin: -Math.PI / 2,
-    tMax: Math.PI / 2,
     zMin: -5,
     zMax: 5,
     att: 0.98,
@@ -228,16 +226,22 @@ function spherical_viewer() {
   }
 
   let lastCam = Date.now();
-  function moveCam(x, y, z, background) {
+  function moveCam(x, y, z) {
     model.cam = model.cam.rotateX(x / model.r * getRate()).rotateY(-y / model.r * getRate());
     model.z = Math.max(opts.zMin, Math.min(model.z + z / model.r * 0.1 * getRate(), opts.zMax));
-    if (!background) {
-      const t = Date.now() - lastCam;
+    const t = Date.now() - lastCam;
+    if (t > 0) {
       lastCam += t;
       model.vx = x / t;
       model.vy = y / t;
       model.vz = z / t;
     }
+    model.valid = false;
+  }
+
+  function moveCamB(x, y, z) {
+    model.cam = model.cam.rotateX(x / model.r * getRate()).rotateY(-y / model.r * getRate());
+    model.z = Math.max(opts.zMin, Math.min(model.z + z / model.r * 0.1 * getRate(), opts.zMax));
     model.valid = false;
   }
 
@@ -250,7 +254,7 @@ function spherical_viewer() {
     cv.addEventListener("mousemove", function (event) {
       if (model.dragging) {
         event.preventDefault();
-        moveCam(event.pageY - lastPoint.pageY, event.pageX - lastPoint.pageX, 0, false);
+        moveCam(event.pageY - lastPoint.pageY, event.pageX - lastPoint.pageX, 0);
         lastPoint = { pageX: event.pageX, pageY: event.pageY };
       }
     });
@@ -265,14 +269,14 @@ function spherical_viewer() {
     });
     cv.addEventListener('wheel', function (event) {
       event.preventDefault();
-      moveCam(0, 0, event.deltaY, false);
+      moveCam(0, 0, event.deltaY);
     });
   }
 
   function touchEventSupport() {
     function getPoints(event) {
       const points = [];
-      for (let i = 0; i < event.touches.length; i += 1) {
+      for (let i = 0; i < event.touches.length; i++) {
         points.push({
           pageX: event.touches[i].pageX,
           pageY: event.touches[i].pageY
@@ -284,7 +288,7 @@ function spherical_viewer() {
     cv.addEventListener('touchmove', function (event) {
       if (model.dragging) {
         if (event.touches.length == 1 && lastPoints.length == 1) {
-          moveCam(event.touches[0].pageY - lastPoints[0].pageY, event.touches[0].pageX - lastPoints[0].pageX, 0, false);
+          moveCam(event.touches[0].pageY - lastPoints[0].pageY, event.touches[0].pageX - lastPoints[0].pageX, 0);
         }
         else if (event.touches.length == 2 && lastPoints.length == 2) {
           function d(o) {
@@ -292,7 +296,7 @@ function spherical_viewer() {
             const dy = o[0].pageY - o[1].pageY;
             return 10 * Math.sqrt(dx * dx + dy * dy);
           }
-          moveCam(0, 0, d(event.touches) - d(lastPoints), false);
+          moveCam(0, 0, d(event.touches) - d(lastPoints));
         }
         lastPoints = getPoints(event);
       }
@@ -321,33 +325,12 @@ function spherical_viewer() {
         model.vz = 0;
       }
       else {
-        moveCam(model.vx * dt, model.vy * dt, model.vz * dt, true);
+        moveCamB(model.vx * dt, model.vy * dt, model.vz * dt);
         model.vx *= opts.att;
         model.vy *= opts.att;
         model.vz *= opts.att;
       }
     }
-  }
-
-  function update(now) {
-    if (model.lastTime != 0) {
-      doMotion(now - model.lastTime);
-    }
-    model.lastTime = now;
-
-    if (model.width != gl.canvas.width || model.height != gl.canvas.height) {
-      model.width = gl.canvas.width;
-      model.height = gl.canvas.height;
-      gl.viewport(0, 0, model.width, model.height);
-      model.valid = false;
-    }
-
-    if (!model.valid) {
-      updateScene();
-      model.valid = true;
-    }
-
-    window.requestAnimationFrame(update);
   }
 
   //---------------------------------------------------------------------
@@ -390,11 +373,11 @@ function spherical_viewer() {
       vt.push(Math.cos(p) * Math.cos(t));
       vt.push(Math.sin(t));
       vt.push(Math.sin(p) * Math.cos(t));
-      tx.push(p / (2 * Math.PI) + v);
-      tx.push(1 - (t / Math.PI + 0.5));
+      tx.push(v + h / hDiv); //tx.push(p / (2 * Math.PI) + v);
+      tx.push((1 - Math.sin(to)) / 2); //tx.push(1 - (t / Math.PI + 0.5));
     }
-    for (let v = 0; v <= vDiv; v += 1) {
-      for (let h = 0; h < hDiv; h += 1) {
+    for (let v = 0; v <= vDiv; v++) {
+      for (let h = 0; h < hDiv; h++) {
         addPoint(h, v, v == 0 ? 0 : h / hDiv - 1);
         addPoint(h, v, v == vDiv ? 1 : h / hDiv);
       }
@@ -441,6 +424,27 @@ function spherical_viewer() {
     gl.uniformMatrix4fv(uMatrixLoc, false, mat);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, model.numPoints);
+  }
+
+  function update(now) {
+    if (model.lastTime != 0) {
+      doMotion(now - model.lastTime);
+    }
+    model.lastTime = now;
+
+    if (model.width != gl.canvas.width || model.height != gl.canvas.height) {
+      model.width = gl.canvas.width;
+      model.height = gl.canvas.height;
+      gl.viewport(0, 0, model.width, model.height);
+      model.valid = false;
+    }
+
+    if (!model.valid) {
+      updateScene();
+      model.valid = true;
+    }
+
+    window.requestAnimationFrame(update);
   }
 
   //---------------------------------------------------------------------
