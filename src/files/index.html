@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+    <head>
+        <script src="spherical-viewer.js"></script>
+        <script>window.onload = () => document.getElementById("v").appendChild(spherical_viewer());</script>
+        <style>
+            body { margin: 0 }
+            * { font-family: arial, sans-serif; text-shadow: 2px 2px 2px black; color: white }
+            #b { width: 1280px; margin: auto }
+            #l { position: absolute; padding: 20px; font-size: 32px }
+            #d { position: absolute; top: 40px; padding: 20px; font-size: 18px }
+        </style>
+    </head>
+    <body>
+        <div id="b">
+            <div id="l">KN6PLV</div>
+            <div id="d">FILEDATE</div>
+            <div id="v"></div>
+        </div>
+    </body>
+</html>
