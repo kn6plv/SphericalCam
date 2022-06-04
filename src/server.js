@@ -6,10 +6,16 @@ const fs = require("fs");
 
 const SNAP = "/tmp/snap.current.jpg";
 
-async function server() {
+async function server(take) {
 
     const files = {
-        "/": () => fs.readFileSync("./files/index.html", { encoding: "utf8" }).replace("FILEDATE", (new Date(fs.statSync(SNAP).mtimeMs)).toLocaleString()),
+        "/": () => {
+            const data = fs.readFileSync("./files/index.html", { encoding: "utf8" }).replace("FILEDATE", (new Date(fs.statSync(SNAP).mtimeMs)).toLocaleString());
+            if (take) {
+                take();
+            }
+            return data;
+        },
         "/spherical-viewer.js": "./files/spherical-viewer.js",
         "/snap.jpg": SNAP
     };
@@ -40,4 +46,6 @@ async function server() {
 
 }
 
-module.exports = server;
+module.exports = {
+    run: server
+};

@@ -4,6 +4,7 @@ const fetch = require("node-fetch");
 const fs = require("fs");
 const stream = require("stream");
 
+const PERIOD = 60 * 60 * 1000;
 const CAM = "192.168.1.1";
 
 async function sleep(ms) {
@@ -141,8 +142,9 @@ async function snap() {
     await waitForIdle();
 }
 
+let do_snap;
+
 async function run_snap() {
-    const PERIOD = 60 * 1000;
     await waitForIdle();
     await execute({
         name: "camera.delete",
@@ -156,7 +158,16 @@ async function run_snap() {
         const start = Date.now();
         await snap();
         fs.renameSync("/tmp/snap.new", "/tmp/snap.current.jpg");
-        await sleep(Math.max(0, PERIOD - (Date.now() - start)));
+        await new Promise(resolve => {
+            Log("waiting");
+            const t = setTimeout(resolve, Math.max(0, PERIOD - (Date.now() - start)));
+            do_snap = () => {
+                Log("snap");
+                clearTimeout(t);
+                do_snap = null;
+                resolve();
+            };
+        });
     }
 }
 
@@ -167,4 +178,14 @@ async function run_preview() {
     }
 }
 
-module.exports = run_snap;
+function take_snap() {
+    if (do_snap) {
+        do_snap();
+    }
+}
+
+module.exports = {
+    run: run_snap,
+    //run: run_preview,
+    take: take_snap
+};
