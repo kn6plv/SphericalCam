@@ -162,7 +162,7 @@ function spherical_viewer() {
     zMax: 5,
     att: 0.98,
     pRate: 1,
-    maxTextureSize: 2048
+    maxTextureSize: 4096
   };
 
   const model = {

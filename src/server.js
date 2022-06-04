@@ -4,12 +4,14 @@ const http = require("http");
 const mime = require("mime-types");
 const fs = require("fs");
 
+const SNAP = "/tmp/snap.current.jpg";
+
 async function server() {
 
     const files = {
-        "/": "./files/index.html",
+        "/": () => fs.readFileSync("./files/index.html", { encoding: "utf8" }).replace("FILEDATE", (new Date(fs.statSync(SNAP).mtimeMs)).toLocaleString()),
         "/spherical-viewer.js": "./files/spherical-viewer.js",
-        "/snap.jpg": "/tmp/snap.current.jpg"
+        "/snap.jpg": SNAP
     };
 
     const server = http.createServer((req, res) => {
@@ -19,12 +21,12 @@ async function server() {
             res.writeHead(200, {
                 "Content-Type": mime.lookup(req.url)
             });
-            let data = fs.readFileSync(file);
-            if (req.url == "/") {
-                const stat = fs.statSync("/tmp/snap.current.jpg");
-                data = data.toString().replace("FILEDATE", (new Date(stat.mtimeMs)).toLocaleString());
+            if (typeof file === "string") {
+                res.write(fs.readFileSync(file));
             }
-            res.write(data);
+            else {
+                res.write(file(req));
+            }
         }
         else {
             res.writeHead(404, {
