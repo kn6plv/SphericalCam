@@ -111,7 +111,7 @@ async function getPreview(file) {
                 }
             }
             catch (_) {
-                reader.close(); // not exist!!
+                reader.destroy();
             }
         });
         reader.on("close", resolve);
@@ -156,8 +156,13 @@ async function run_snap() {
     });
     for (;;) {
         const start = Date.now();
-        await snap();
-        fs.renameSync("/tmp/snap.new", "/tmp/snap.current.jpg");
+        try {
+            await snap();
+            fs.renameSync("/tmp/snap.new", "/tmp/snap.current.jpg");
+        }
+        catch (e) {
+            Log(e);
+        }
         await new Promise(resolve => {
             Log("waiting");
             const t = setTimeout(resolve, Math.max(0, PERIOD - (Date.now() - start)));
