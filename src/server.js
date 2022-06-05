@@ -16,7 +16,7 @@ async function server(take) {
             }
             return data;
         },
-        "/spherical-viewer.js": "./files/spherical-viewer.js",
+        "/viewer.js": "./files/spherical-viewer.min.js",
         "/snap.jpg": SNAP
     };
 

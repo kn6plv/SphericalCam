@@ -3,5 +3,6 @@
 const snap = require("./snap");
 const server = require("./server");
 
-snap.run();
-server.run(snap.take);
+//snap.run();
+//server.run(snap.take);
+server.run();
