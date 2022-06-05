@@ -156,8 +156,8 @@ function spherical_viewer() {
     height: 768,
     hDiv: hDiv,
     vDiv: hDiv << 1,
-    zMin: -5,
-    zMax: 5,
+    zMin: -0.5,
+    zMax: 2,
     att: 0.98,
     pRate: 1,
     maxTextureSize: 4096
@@ -219,7 +219,7 @@ function spherical_viewer() {
   //---------------------------------------------------------------------
   function preparePgm() {
     const vs = createShader(gl, gl.VERTEX_SHADER,
-     `attribute vec4 aPosition;uniform mat4 uMatrix;attribute vec2 aTexcoord;varying vec2 vTexcoord;float strength = 2.0;float zoom = 2.0;float correctionRadius = sqrt(8.0) / strength; void main() {vec4 nPosition = uMatrix * aPosition;float r = sqrt(nPosition.x * nPosition.x + nPosition.y * nPosition.y) / correctionRadius;float theta = r == 0.0 ? 1.0 : atan(r) / r;gl_Position = vec4(nPosition.x / theta * zoom, nPosition.y / theta * zoom, sign(nPosition.z), nPosition.w);vTexcoord = aTexcoord;}`
+     `attribute vec4 aPosition;uniform mat4 uMatrix;attribute vec2 aTexcoord;varying vec2 vTexcoord;uniform float strength;uniform float zoom;float correctionRadius = sqrt(8.0) / strength; void main() {vec4 nPosition = uMatrix * aPosition;float r = sqrt(nPosition.x * nPosition.x + nPosition.y * nPosition.y) / correctionRadius;float theta = r == 0.0 ? 1.0 : atan(r) / r;gl_Position = vec4(nPosition.x / theta * zoom, nPosition.y / theta * zoom, sign(nPosition.z), nPosition.w);vTexcoord = aTexcoord;}`
     );
     const fs = createShader(gl, gl.FRAGMENT_SHADER,
       `precision mediump float;varying vec2 vTexcoord;uniform sampler2D uTexture;void main() {gl_FragColor = texture2D(uTexture, vTexcoord);}`
@@ -271,10 +271,10 @@ function spherical_viewer() {
       lastPoint = { pageX: event.pageX, pageY: event.pageY };
       model.dragging = true;
     });
-    //cv.addEventListener('wheel', function (event) {
-    //  event.preventDefault();
-    //  moveCam(0, 0, event.deltaY);
-    //});
+    cv.addEventListener('wheel', function (event) {
+      event.preventDefault();
+      moveCam(0, 0, event.deltaY);
+    });
   }
 
   function touchEventSupport() {
@@ -294,14 +294,14 @@ function spherical_viewer() {
         if (event.touches.length == 1 && lastPoints.length == 1) {
           moveCam(event.touches[0].pageY - lastPoints[0].pageY, event.touches[0].pageX - lastPoints[0].pageX, 0);
         }
-        //else if (event.touches.length == 2 && lastPoints.length == 2) {
-        //  function d(o) {
-        //    const dx = o[0].pageX - o[1].pageX;
-        //    const dy = o[0].pageY - o[1].pageY;
-        //    return 10 * Math.sqrt(dx * dx + dy * dy);
-        //  }
-        //  moveCam(0, 0, d(event.touches) - d(lastPoints));
-        //}
+        else if (event.touches.length == 2 && lastPoints.length == 2) {
+          function d(o) {
+            const dx = o[0].pageX - o[1].pageX;
+            const dy = o[0].pageY - o[1].pageY;
+            return 10 * Math.sqrt(dx * dx + dy * dy);
+          }
+          moveCam(0, 0, d(event.touches) - d(lastPoints));
+        }
         lastPoints = getPoints(event);
       }
     });
@@ -426,6 +426,14 @@ function spherical_viewer() {
 
     const uMatrixLoc = gl.getUniformLocation(pgm, 'uMatrix');
     gl.uniformMatrix4fv(uMatrixLoc, false, mat);
+
+    const strength = 2.0 + model.z * -1.2;
+    const strengthLoc = gl.getUniformLocation(pgm, 'strength');
+    gl.uniform1f(strengthLoc, strength);
+
+    const zoom = 2.0 + model.z;
+    const zoomLoc = gl.getUniformLocation(pgm, 'zoom');
+    gl.uniform1f(zoomLoc, zoom);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, model.numPoints);
   }
