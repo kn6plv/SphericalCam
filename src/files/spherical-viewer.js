@@ -149,15 +149,15 @@ function spherical_viewer() {
 
   //---------------------------------------------------------------------
 
-  const hDiv = 32;
+  const hDiv = 64;
   const opts = {
     src: 'snap.jpg',
     width: 1280,
     height: 768,
     hDiv: hDiv,
     vDiv: hDiv << 1,
-    zMin: -0.5,
-    zMax: 2,
+    zMin: 1,
+    zMax: 5,
     att: 0.98,
     pRate: 1,
     maxTextureSize: 4096
@@ -170,7 +170,7 @@ function spherical_viewer() {
     height: 0,
     numPoints: 0,
     r: 0,
-    z: 0,
+    z: 1,
     dragging: false,
     cam : mat4(),
     vx : 0,
@@ -405,7 +405,7 @@ function spherical_viewer() {
   }
 
   function updateScene() {
-    model.r = model.width * Math.exp(Math.log(1.5) * model.z);
+    model.r = model.width * 1.5;
     const w = model.width;
     const h = model.height;
 
@@ -427,13 +427,11 @@ function spherical_viewer() {
     const uMatrixLoc = gl.getUniformLocation(pgm, 'uMatrix');
     gl.uniformMatrix4fv(uMatrixLoc, false, mat);
 
-    const strength = 2.0 + model.z * -1.2;
     const strengthLoc = gl.getUniformLocation(pgm, 'strength');
-    gl.uniform1f(strengthLoc, strength);
+    gl.uniform1f(strengthLoc, 1.3);
 
-    const zoom = 2.0 + model.z;
     const zoomLoc = gl.getUniformLocation(pgm, 'zoom');
-    gl.uniform1f(zoomLoc, zoom);
+    gl.uniform1f(zoomLoc, model.z);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, model.numPoints);
   }
