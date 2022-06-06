@@ -366,17 +366,13 @@ function spherical_viewer() {
     const req = new XMLHttpRequest();
     req.open("GET", opts.src, true);
     req.responseType = "arraybuffer";
-    let tt = null;
     req.onloadstart = function() {
-      tt = setTimeout(function() {
-        loading.innerText = `Loading ...`;
-      }, 1000);
+      loading.innerText = `Loading ...`;
     }
     req.onprogress = function(e) {
       if (e.lengthComputable) {
-        clearTimeout(tt);
         if (e.loaded !== e.total) {
-          loading.innerText = `Loading ... ${parseInt((e.loaded / e.total) * 100)}%`;
+          loading.innerText = `Loading ... ${Math.ceil((e.loaded / e.total) * 100)}%`;
         }
         else {
           loading.innerText = "";
@@ -384,7 +380,6 @@ function spherical_viewer() {
       }
     }
     req.onload = function() {
-      clearTimeout(tt);
       loading.innerText = "";
       img.src = window.URL.createObjectURL(new Blob([ req.response ], { type: req.getAllResponseHeaders().match(/^Content-Type\:\s*(.*?)$/mi)[1] || 'image/jpeg' }));
     }
