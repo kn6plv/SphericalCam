@@ -42,7 +42,7 @@ async function server(take) {
         }
         res.end();
     });
-    server.listen(8080);
+    server.listen(80);
 
 }
 

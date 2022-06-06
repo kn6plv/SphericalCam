@@ -361,8 +361,34 @@ function spherical_viewer() {
       gl.generateMipmap(gl.TEXTURE_2D);
       model.valid = false;
     });
-    img.crossOrigin = 'anonymous';
-    img.src = opts.src;
+
+    const loading = document.getElementById("l");
+    const req = new XMLHttpRequest();
+    req.open("GET", opts.src, true);
+    req.responseType = "arraybuffer";
+    let tt = null;
+    req.onloadstart = function() {
+      tt = setTimeout(function() {
+        loading.innerText = `Loading ...`;
+      }, 1000);
+    }
+    req.onprogress = function(e) {
+      if (e.lengthComputable) {
+        clearTimeout(tt);
+        if (e.loaded !== e.total) {
+          loading.innerText = `Loading ... ${parseInt((e.loaded / e.total) * 100)}%`;
+        }
+        else {
+          loading.innerText = "";
+        }
+      }
+    }
+    req.onload = function() {
+      clearTimeout(tt);
+      loading.innerText = "";
+      img.src = window.URL.createObjectURL(new Blob([ req.response ], { type: req.getAllResponseHeaders().match(/^Content-Type\:\s*(.*?)$/mi)[1] || 'image/jpeg' }));
+    }
+    req.send();
   }
 
   function prepareScene() {
