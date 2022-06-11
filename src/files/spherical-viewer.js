@@ -172,7 +172,7 @@ function spherical_viewer() {
     r: 0,
     z: 1,
     dragging: false,
-    cam : mat4(),
+    cam : mat4().rotateY(-2),
     vx : 0,
     vy : -0.5,
     vz : 0
